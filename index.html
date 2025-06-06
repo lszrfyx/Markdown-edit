@@ -7,8 +7,30 @@
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
         #toolbar { background: #f0f0f0; padding: 10px; }
         #toolbar button, #toolbar select { margin-right: 8px; }
-        #editor { width: 100%; height: 400px; padding: 10px; font-size: 16px; }
-        #preview { border-top: 1px solid #ccc; padding: 10px; min-height: 200px; }
+        #container {
+            display: flex;
+            height: calc(100vh - 50px);
+            min-height: 400px;
+        }
+        #editor {
+            width: 50%;
+            height: 100%;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            border: none;
+            border-right: 1px solid #ccc;
+            resize: none;
+            outline: none;
+        }
+        #preview {
+            width: 50%;
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: auto;
+            background: #fafbfc;
+        }
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
             overflow: auto; background: rgba(0,0,0,0.2);
@@ -19,13 +41,14 @@
         }
         .modal label { display: block; margin-top: 10px; }
         .modal input[type="number"] { width: 50px; margin-right: 8px; }
+        @media (max-width: 700px) {
+            #container { flex-direction: column; }
+            #editor, #preview { width: 100%; height: 35vh; border-right: none; border-bottom: 1px solid #ccc;}
+        }
     </style>
-    <!-- marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- highlight.js for code highlight -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
-    <!-- MathJax for formula render -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script type="text/javascript" id="MathJax-script" async
       src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -41,7 +64,6 @@
     </select>
     <button onclick="insertAtCursor('**加粗文本**')"><b>B</b></button>
     <button onclick="insertAtCursor('*斜体文本*')"><i>I</i></button>
-    <!-- 代码块多语言 -->
     <select id="code-lang-select">
         <option value="">代码块</option>
         <option value="">无语言</option>
@@ -62,9 +84,21 @@
     <button onclick="insertLink()">插入链接</button>
     <button onclick="insertLinkedImage()">插入带链接的图片</button>
     <button onclick="openMarkdownGuide()">Markdown语法</button>
+    <!-- 新增markdown语法按钮 -->
+    <button onclick="insertUnorderedList()">无序列表</button>
+    <button onclick="insertOrderedList()">有序列表</button>
+    <button onclick="insertQuote()">引用块</button>
+    <button onclick="insertHr()">分割线</button>
+    <button onclick="insertInlineCode()">内联代码</button>
+    <button onclick="insertHtmlBlock()">HTML嵌入</button>
+    <button onclick="insertAutoLink()">自动链接</button>
+    <button onclick="insertFootnote()">脚注</button>
+    <button onclick="insertDetails()">折叠内容</button>
 </div>
-<textarea id="editor"></textarea>
-<div id="preview"></div>
+<div id="container">
+    <textarea id="editor" spellcheck="false"></textarea>
+    <div id="preview"></div>
+</div>
 
 <!-- 表格弹窗 -->
 <div id="table-modal" class="modal">
@@ -85,7 +119,6 @@
     </div>
 </div>
 
-<!-- 公式弹窗 -->
 <div id="formula-modal" class="modal">
     <div class="modal-content">
         <h3>插入公式</h3>
@@ -108,7 +141,7 @@
 </div>
 
 <script>
-// 多级标题按钮
+// 多级标题
 document.getElementById('heading-select').addEventListener('change', function() {
     if (this.value) insertAtCursor(this.value + '标题');
     this.selectedIndex = 0;
@@ -132,7 +165,6 @@ window.onload = function() {
     updatePreview();
 };
 
-// 插入指定内容
 function insertAtCursor(text) {
     const textarea = document.getElementById('editor');
     const start = textarea.selectionStart, end = textarea.selectionEnd;
@@ -142,14 +174,10 @@ function insertAtCursor(text) {
     textarea.focus();
     updatePreview();
 }
-
-// 插入代码块，支持指定语言
 function insertCodeBlock(lang) {
     if (!lang) lang = '';
     insertAtCursor(`\n\`\`\`${lang}\n你的代码\n\`\`\`\n`);
 }
-
-// 表格弹窗逻辑
 function showTableModal() {
     document.getElementById('table-modal').style.display = 'block';
 }
@@ -179,8 +207,6 @@ function insertTable() {
     insertAtCursor('\n' + thead + '\n' + tline + '\n' + tbody);
     closeTableModal();
 }
-
-// 公式弹窗逻辑
 function showFormulaModal() {
     document.getElementById('formula-modal').style.display = 'block';
     document.getElementById('formula-input').value = '';
@@ -205,8 +231,6 @@ function insertFormula() {
     insertAtCursor('\n$$' + formula + '$$\n');
     closeFormulaModal();
 }
-
-// 插入图片
 function insertImage() {
     const url = prompt('请输入图片URL：');
     if (url) {
@@ -214,8 +238,6 @@ function insertImage() {
         insertAtCursor(`![${alt}](${url})`);
     }
 }
-
-// 插入链接
 function insertLink() {
     const url = prompt('请输入链接URL：');
     if (url) {
@@ -223,8 +245,6 @@ function insertLink() {
         insertAtCursor(`[${text}](${url})`);
     }
 }
-
-// 插入带链接的图片
 function insertLinkedImage() {
     const imageUrl = prompt('请输入图片URL：');
     if (!imageUrl) return;
@@ -233,13 +253,40 @@ function insertLinkedImage() {
     if (!linkUrl) return;
     insertAtCursor(`[![${alt}](${imageUrl})](${linkUrl})`);
 }
-
-// Markdown语法按钮
 function openMarkdownGuide() {
     window.open('https://www.markdownguide.org/basic-syntax/', '_blank');
 }
 
-// 实时预览
+// 新增markdown语法功能
+function insertUnorderedList() {
+    insertAtCursor('\n- 无序项1\n- 无序项2\n- 无序项3\n');
+}
+function insertOrderedList() {
+    insertAtCursor('\n1. 有序项1\n2. 有序项2\n3. 有序项3\n');
+}
+function insertQuote() {
+    insertAtCursor('\n> 这是一个引用块\n');
+}
+function insertHr() {
+    insertAtCursor('\n---\n');
+}
+function insertInlineCode() {
+    insertAtCursor('`内联代码`');
+}
+function insertHtmlBlock() {
+    insertAtCursor('\n<div>自定义HTML内容</div>\n');
+}
+function insertAutoLink() {
+    const url = prompt('请输入要自动链接的网址（如 https://example.com）：');
+    if (url) insertAtCursor(`<${url}>`);
+}
+function insertFootnote() {
+    insertAtCursor('这是一个脚注示例[^1]\n\n[^1]: 这里是脚注内容\n');
+}
+function insertDetails() {
+    insertAtCursor('\n<details>\n<summary>点击展开/折叠</summary>\n\n这里是可以折叠的内容。\n\n</details>\n');
+}
+
 function updatePreview() {
     let md = document.getElementById('editor').value;
     let html = marked.parse(md, {
@@ -250,8 +297,6 @@ function updatePreview() {
     document.getElementById('preview').innerHTML = html;
     if (window.MathJax) MathJax.typesetPromise([document.getElementById('preview')]);
 }
-
-// 点击模态框外部关闭
 window.onclick = function(event) {
     if (event.target == document.getElementById('table-modal')) closeTableModal();
     if (event.target == document.getElementById('formula-modal')) closeFormulaModal();
