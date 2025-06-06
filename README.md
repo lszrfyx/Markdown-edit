@@ -47,7 +47,7 @@
 2. 按照 Cloudflare Pages 指引，将本仓库 Fork 到你自己的账号
 3. 自动完成部署并获取访问链接
 
-[![Deploy to Cloudflare](https://developers.cloudflare.com/pages/deploy-button.png)](https://deploy.cloudflare.com/?url=https://github.com/lszrfyx/Markdown-edit)
+[![Deploy to Cloudflare](https://686e7a0.webp.li/CF%E5%9B%BE%E7%89%87.svg)](https://deploy.cloudflare.com/?url=https://github.com/lszrfyx/Markdown-edit)
 
 ## 许可证
 
