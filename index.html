@@ -20,12 +20,12 @@
         .modal label { display: block; margin-top: 10px; }
         .modal input[type="number"] { width: 50px; margin-right: 8px; }
     </style>
-    <!-- 引入 marked.js 进行 Markdown 解析 -->
+    <!-- marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- 引入 highlight.js 代码高亮 -->
+    <!-- highlight.js for code highlight -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
-    <!-- 引入 MathJax 进行公式渲染 -->
+    <!-- MathJax for formula render -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script type="text/javascript" id="MathJax-script" async
       src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -42,9 +42,25 @@
     </select>
     <button onclick="insertAtCursor('**加粗文本**')"><b>B</b></button>
     <button onclick="insertAtCursor('*斜体文本*')"><i>I</i></button>
-    <button onclick="insertCodeBlock()">代码块</button>
+    <!-- 代码块多语言 -->
+    <select id="code-lang-select">
+        <option value="">代码块</option>
+        <option value="">无语言</option>
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="html">HTML</option>
+        <option value="css">CSS</option>
+        <option value="cpp">C++</option>
+        <option value="c">C</option>
+        <option value="java">Java</option>
+        <option value="markdown">Markdown</option>
+        <option value="json">JSON</option>
+        <option value="bash">Bash</option>
+    </select>
     <button onclick="showTableModal()">插入表格</button>
     <button onclick="showFormulaModal()">插入公式</button>
+    <button onclick="insertImage()">插入图片</button>
+    <button onclick="insertLink()">插入链接</button>
     <button onclick="openMarkdownGuide()">Markdown语法</button>
 </div>
 <textarea id="editor"></textarea>
@@ -98,10 +114,21 @@ document.getElementById('heading-select').addEventListener('change', function() 
     this.selectedIndex = 0;
 });
 
+// 代码块多语言插入
+document.getElementById('code-lang-select').addEventListener('change', function() {
+    let lang = this.value;
+    if (lang === "" && this.selectedIndex !== 0) {
+        insertCodeBlock('');
+    } else if (lang !== "") {
+        insertCodeBlock(lang);
+    }
+    this.selectedIndex = 0;
+});
+
 // 编辑器和预览联动
 document.getElementById('editor').addEventListener('input', updatePreview);
 window.onload = function() {
-    document.getElementById('editor').value = ''; // 去除默认欢迎语
+    document.getElementById('editor').value = '';
     updatePreview();
 };
 
@@ -116,9 +143,10 @@ function insertAtCursor(text) {
     updatePreview();
 }
 
-// 插入代码块，并自动选中代码区域
-function insertCodeBlock() {
-    insertAtCursor('\n```\n你的代码\n```\n');
+// 插入代码块，支持指定语言
+function insertCodeBlock(lang) {
+    if (!lang) lang = '';
+    insertAtCursor(`\n\`\`\`${lang}\n你的代码\n\`\`\`\n`);
 }
 
 // 表格弹窗逻辑
@@ -128,7 +156,6 @@ function showTableModal() {
 function closeTableModal() {
     document.getElementById('table-modal').style.display = 'none';
 }
-// 插入表格
 function insertTable() {
     const rows = parseInt(document.getElementById('table-rows').value) || 2;
     const cols = parseInt(document.getElementById('table-cols').value) || 2;
@@ -177,6 +204,24 @@ function insertFormula() {
     let formula = document.getElementById('formula-input').value || 'E=mc^2';
     insertAtCursor('\n$$' + formula + '$$\n');
     closeFormulaModal();
+}
+
+// 插入图片
+function insertImage() {
+    const url = prompt('请输入图片URL：');
+    if (url) {
+        const alt = prompt('请输入图片描述（可选）：') || '';
+        insertAtCursor(`![${alt}](${url})`);
+    }
+}
+
+// 插入链接
+function insertLink() {
+    const url = prompt('请输入链接URL：');
+    if (url) {
+        const text = prompt('请输入链接文本：') || url;
+        insertAtCursor(`[${text}](${url})`);
+    }
 }
 
 // Markdown语法按钮，直接新标签页打开官方语法
