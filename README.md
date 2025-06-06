@@ -18,7 +18,7 @@
 你可以 [点此在线体验]([https://markdown-edit.pages.dev/]
 或通过 Cloudflare Pages 一键部署：
 
-[![Deploy to Cloudflare](https://developers.cloudflare.com/pages/deploy-button.png)](https://deploy.cloudflare.com/?url=https://github.com/lszrfyx/Markdown-edit)
+[![Deploy to Cloudflare](https://686e7a0.webp.li/CF%E5%9B%BE%E7%89%87.svg)](https://deploy.cloudflare.com/?url=https://github.com/lszrfyx/Markdown-edit)
 
 ## 部署教程
 
