@@ -1,175 +1,206 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markdown 编辑器</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.1.0/github-markdown-light.min.css">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    header {
-      padding: 0.5rem;
-      background-color: #24292f;
-      color: white;
-      text-align: center;
-    }
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 0.5rem;
-      background: #f6f8fa;
-      border-bottom: 1px solid #ccc;
-      gap: 0.4rem;
-    }
-    .toolbar button {
-      padding: 0.3rem 0.6rem;
-      font-size: 14px;
-      cursor: pointer;
-      border: 1px solid #ccc;
-      background: white;
-      border-radius: 4px;
-    }
-    .editor {
-      flex: 1;
-      display: flex;
-    }
-    textarea {
-      flex: 1;
-      padding: 1rem;
-      font-size: 16px;
-      border: none;
-      border-right: 1px solid #ddd;
-      resize: none;
-    }
-    .preview {
-      flex: 1;
-      padding: 1rem;
-      overflow: auto;
-    }
-    .markdown-body {
-      box-sizing: border-box;
-      min-width: 200px;
-      max-width: 100%;
-      margin: 0 auto;
-    }
-    footer {
-      padding: 0.5rem;
-      background: #f0f0f0;
-      text-align: center;
-    }
-    #syntax-guide {
-      display: none;
-      max-height: 50vh;
-      overflow-y: auto;
-      margin-top: 1rem;
-      border-top: 1px solid #ccc;
-      padding-top: 1rem;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Markdown 编辑器</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        #toolbar { background: #f0f0f0; padding: 10px; }
+        #toolbar button, #toolbar select { margin-right: 8px; }
+        #editor { width: 100%; height: 400px; padding: 10px; font-size: 16px; }
+        #preview { border-top: 1px solid #ccc; padding: 10px; min-height: 200px; }
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background: rgba(0,0,0,0.2);
+        }
+        .modal-content {
+            background: #fff; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 320px;
+            border-radius: 8px;
+        }
+        .modal label { display: block; margin-top: 10px; }
+        .modal input[type="number"] { width: 50px; margin-right: 8px; }
+    </style>
+    <!-- 引入 marked.js 进行 Markdown 解析 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 引入 highlight.js 代码高亮 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <!-- 引入 MathJax 进行公式渲染 -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script type="text/javascript" id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h2>Markdown 编辑器</h2>
-    </header>
+<div id="toolbar">
+    <!-- 多级标题 -->
+    <select id="heading-select">
+        <option value="">标题</option>
+        <option value="# ">一级标题</option>
+        <option value="## ">二级标题</option>
+        <option value="### ">三级标题</option>
+        <option value="#### ">四级标题</option>
+    </select>
+    <button onclick="insertAtCursor('**加粗文本**')"><b>B</b></button>
+    <button onclick="insertAtCursor('*斜体文本*')"><i>I</i></button>
+    <button onclick="insertCodeBlock()">代码块</button>
+    <button onclick="showTableModal()">插入表格</button>
+    <button onclick="showFormulaModal()">插入公式</button>
+    <button onclick="openMarkdownGuide()">Markdown语法</button>
+</div>
+<textarea id="editor"></textarea>
+<div id="preview"></div>
 
-    <div class="toolbar">
-      <button onclick="insertSyntax('# ')">标题</button>
-      <button onclick="insertSyntax('**加粗**')">粗体</button>
-      <button onclick="insertSyntax('*斜体*')">斜体</button>
-      <button onclick="insertSyntax('~~删除线~~')">删除线</button>
-      <button onclick="insertSyntax('<u>下划线</u>')">下划线</button>
-      <button onclick="insertSyntax('---\n')">分隔线</button>
-      <button onclick="insertSyntax('[链接文本](https://example.com)')">链接</button>
-      <button onclick="insertSyntax('![图片描述](https://example.com/image.png)')">图片</button>
-      <button onclick="insertSyntax('- 项目1\n- 项目2')">列表</button>
-      <button onclick="insertSyntax('> 引用文本')">引用块</button>
-      <button onclick="insertSyntax('```js\nconsole.log(\"代码块\");\n```')">代码块</button>
-      <button onclick="insertSyntax('| 表头 | 表头 |\n| ---- | ---- |\n| 内容 | 内容 |')">表格</button>
-      <button onclick="insertSyntax('$$E = mc^2$$')">公式</button>
-      <button onclick="toggleSyntaxGuide()">📘 Markdown 语法</button>
-      <button onclick="copyMarkdown()">📋 复制 Markdown</button>
+<!-- 表格弹窗 -->
+<div id="table-modal" class="modal">
+    <div class="modal-content">
+        <h3>插入表格</h3>
+        <label>行数: <input type="number" id="table-rows" min="1" value="2"></label>
+        <label>列数: <input type="number" id="table-cols" min="1" value="2"></label>
+        <label>对齐方式:
+            <select id="table-align">
+                <option value="left">左对齐</option>
+                <option value="center">居中</option>
+                <option value="right">右对齐</option>
+            </select>
+        </label>
+        <br>
+        <button onclick="insertTable()">确定</button>
+        <button onclick="closeTableModal()">取消</button>
     </div>
+</div>
 
-    <div class="editor">
-      <textarea id="markdown-input" placeholder="在这里输入 Markdown..."></textarea>
-      <div class="preview markdown-body" id="markdown-preview"></div>
+<!-- 公式弹窗 -->
+<div id="formula-modal" class="modal">
+    <div class="modal-content">
+        <h3>插入公式</h3>
+        <label>常用公式:
+            <select id="formula-template" onchange="onFormulaTemplate()">
+                <option value="">自定义</option>
+                <option value="E = mc^2">E = mc^2</option>
+                <option value="a^2 + b^2 = c^2">a^2 + b^2 = c^2</option>
+                <option value="\\frac{a}{b}">分数 \\frac{a}{b}</option>
+                <option value="\\int_a^b f(x)dx">积分 \\int_a^b f(x)dx</option>
+                <option value="\\sum_{i=1}^n i">求和 \\sum_{i=1}^n i</option>
+            </select>
+        </label>
+        <label>公式内容（支持LaTeX）：<input id="formula-input" style="width:90%"></label>
+        <div>预览：<span id="formula-preview"></span></div>
+        <br>
+        <button onclick="insertFormula()">确定</button>
+        <button onclick="closeFormulaModal()">取消</button>
     </div>
+</div>
 
-    <div id="syntax-guide" class="markdown-body">
-      <h2>Markdown 语法指南</h2>
-      <ul>
-        <li><code># 标题1</code>, <code>## 标题2</code> 等</li>
-        <li>段落通过空行分隔</li>
-        <li><strong>粗体</strong>: <code>**文本**</code></li>
-        <li><em>斜体</em>: <code>*文本*</code></li>
-        <li><del>删除线</del>: <code>~~文本~~</code></li>
-        <li><u>下划线</u>: <code>&lt;u&gt;文本&lt;/u&gt;</code> (HTML)</li>
-        <li>分隔线: <code>---</code></li>
-        <li>脚注: <code>[^1]</code></li>
-        <li>列表: <code>-</code> 或 <code>1.</code></li>
-        <li>引用块: <code>&gt; 引用</code></li>
-        <li>代码块: <code>```语言```</code></li>
-        <li>链接: <code>[链接文本](网址)</code></li>
-        <li>图片: <code>![alt](img_url)</code></li>
-        <li>表格: 使用 <code>|</code> 分隔</li>
-        <li>转义字符: 使用 <code>\</code> 转义</li>
-        <li>数学公式: <code>$$ 公式 $$</code> 或 <code>\( \)</code></li>
-      </ul>
-    </div>
+<script>
+// 多级标题按钮
+document.getElementById('heading-select').addEventListener('change', function() {
+    if (this.value) insertAtCursor(this.value + '标题');
+    this.selectedIndex = 0;
+});
 
-    <footer>
-      部署到 Cloudflare Pages 即可使用，无需后端支持。
-    </footer>
-  </div>
+// 编辑器和预览联动
+document.getElementById('editor').addEventListener('input', updatePreview);
+window.onload = function() {
+    document.getElementById('editor').value = ''; // 去除默认欢迎语
+    updatePreview();
+};
 
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  <script>
-    const input = document.getElementById('markdown-input');
-    const preview = document.getElementById('markdown-preview');
+// 插入指定内容
+function insertAtCursor(text) {
+    const textarea = document.getElementById('editor');
+    const start = textarea.selectionStart, end = textarea.selectionEnd;
+    const before = textarea.value.substring(0, start), after = textarea.value.substring(end);
+    textarea.value = before + text + after;
+    textarea.selectionStart = textarea.selectionEnd = start + text.length;
+    textarea.focus();
+    updatePreview();
+}
 
-    function renderMarkdown() {
-      preview.innerHTML = marked.parse(input.value);
-      MathJax.typesetPromise();
+// 插入代码块，并自动选中代码区域
+function insertCodeBlock() {
+    insertAtCursor('\n```\n你的代码\n```\n');
+}
+
+// 表格弹窗逻辑
+function showTableModal() {
+    document.getElementById('table-modal').style.display = 'block';
+}
+function closeTableModal() {
+    document.getElementById('table-modal').style.display = 'none';
+}
+// 插入表格
+function insertTable() {
+    const rows = parseInt(document.getElementById('table-rows').value) || 2;
+    const cols = parseInt(document.getElementById('table-cols').value) || 2;
+    let align = document.getElementById('table-align').value;
+    let alignStr = '';
+    if (align === 'center') alignStr = ':' + '-'.repeat(3) + ':';
+    else if (align === 'right') alignStr = '---:';
+    else alignStr = ':---';
+    let thead = '|';
+    let tline = '|';
+    for(let i = 0; i < cols; i++) {
+        thead += ` 列${i+1} |`;
+        tline += ` ${alignStr} |`;
     }
-
-    input.addEventListener('input', renderMarkdown);
-    window.onload = () => {
-      input.value = '# 欢迎使用 Markdown 编辑器';
-      renderMarkdown();
+    let tbody = '';
+    for(let r = 0; r < rows-1; r++) {
+        let row = '|';
+        for(let c = 0; c < cols; c++) row += '      |';
+        tbody += row + '\n';
     }
+    insertAtCursor('\n' + thead + '\n' + tline + '\n' + tbody);
+    closeTableModal();
+}
 
-    function insertSyntax(syntax) {
-      const start = input.selectionStart;
-      const end = input.selectionEnd;
-      const before = input.value.substring(0, start);
-      const after = input.value.substring(end);
-      input.value = before + syntax + after;
-      input.focus();
-      renderMarkdown();
-    }
+// 公式弹窗逻辑
+function showFormulaModal() {
+    document.getElementById('formula-modal').style.display = 'block';
+    document.getElementById('formula-input').value = '';
+    document.getElementById('formula-preview').innerHTML = '';
+}
+function closeFormulaModal() {
+    document.getElementById('formula-modal').style.display = 'none';
+}
+function onFormulaTemplate() {
+    let val = document.getElementById('formula-template').value;
+    document.getElementById('formula-input').value = val;
+    updateFormulaPreview();
+}
+document.getElementById('formula-input').addEventListener('input', updateFormulaPreview);
+function updateFormulaPreview() {
+    let formula = document.getElementById('formula-input').value;
+    document.getElementById('formula-preview').innerHTML = '$$' + formula + '$$';
+    if (window.MathJax) MathJax.typesetPromise([document.getElementById('formula-preview')]);
+}
+function insertFormula() {
+    let formula = document.getElementById('formula-input').value || 'E=mc^2';
+    insertAtCursor('\n$$' + formula + '$$\n');
+    closeFormulaModal();
+}
 
-    function toggleSyntaxGuide() {
-      const guide = document.getElementById('syntax-guide');
-      guide.style.display = guide.style.display === 'none' ? 'block' : 'none';
-    }
+// Markdown语法按钮，直接新标签页打开官方语法
+function openMarkdownGuide() {
+    window.open('https://www.markdownguide.org/basic-syntax/', '_blank');
+}
 
-    function copyMarkdown() {
-      input.select();
-      document.execCommand('copy');
-      alert('已复制 Markdown 内容');
-    }
-  </script>
+// 实时预览
+function updatePreview() {
+    let md = document.getElementById('editor').value;
+    let html = marked.parse(md, {
+        highlight: function(code, lang) {
+            return hljs.highlightAuto(code).value;
+        }
+    });
+    document.getElementById('preview').innerHTML = html;
+    if (window.MathJax) MathJax.typesetPromise([document.getElementById('preview')]);
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    if (event.target == document.getElementById('table-modal')) closeTableModal();
+    if (event.target == document.getElementById('formula-modal')) closeFormulaModal();
+}
+</script>
 </body>
 </html>
