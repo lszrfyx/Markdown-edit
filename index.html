@@ -32,7 +32,6 @@
 </head>
 <body>
 <div id="toolbar">
-    <!-- 多级标题 -->
     <select id="heading-select">
         <option value="">标题</option>
         <option value="# ">一级标题</option>
@@ -61,6 +60,7 @@
     <button onclick="showFormulaModal()">插入公式</button>
     <button onclick="insertImage()">插入图片</button>
     <button onclick="insertLink()">插入链接</button>
+    <button onclick="insertLinkedImage()">插入带链接的图片</button>
     <button onclick="openMarkdownGuide()">Markdown语法</button>
 </div>
 <textarea id="editor"></textarea>
@@ -224,7 +224,17 @@ function insertLink() {
     }
 }
 
-// Markdown语法按钮，直接新标签页打开官方语法
+// 插入带链接的图片
+function insertLinkedImage() {
+    const imageUrl = prompt('请输入图片URL：');
+    if (!imageUrl) return;
+    const alt = prompt('请输入图片描述（可选）：') || '';
+    const linkUrl = prompt('请输入要跳转的链接URL：');
+    if (!linkUrl) return;
+    insertAtCursor(`[![${alt}](${imageUrl})](${linkUrl})`);
+}
+
+// Markdown语法按钮
 function openMarkdownGuide() {
     window.open('https://www.markdownguide.org/basic-syntax/', '_blank');
 }
