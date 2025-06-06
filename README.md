@@ -15,7 +15,7 @@
 
 ## 在线体验
 
-你可以 [点此在线体验]([https://YOUR_DEPLOY_URL](https://markdown-edit.pages.dev/))  
+你可以 [点此在线体验]([https://markdown-edit.pages.dev/]
 或通过 Cloudflare Pages 一键部署：
 
 [![Deploy to Cloudflare](https://developers.cloudflare.com/pages/deploy-button.png)](https://deploy.cloudflare.com/?url=https://github.com/lszrfyx/Markdown-edit)
