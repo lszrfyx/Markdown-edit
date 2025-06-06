@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown 编辑器</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.1.0/github-markdown-light.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      padding: 0.5rem;
+      background-color: #24292f;
+      color: white;
+      text-align: center;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 0.5rem;
+      background: #f6f8fa;
+      border-bottom: 1px solid #ccc;
+      gap: 0.4rem;
+    }
+    .toolbar button {
+      padding: 0.3rem 0.6rem;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      background: white;
+      border-radius: 4px;
+    }
+    .editor {
+      flex: 1;
+      display: flex;
+    }
+    textarea {
+      flex: 1;
+      padding: 1rem;
+      font-size: 16px;
+      border: none;
+      border-right: 1px solid #ddd;
+      resize: none;
+    }
+    .preview {
+      flex: 1;
+      padding: 1rem;
+      overflow: auto;
+    }
+    .markdown-body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    footer {
+      padding: 0.5rem;
+      background: #f0f0f0;
+      text-align: center;
+    }
+    #syntax-guide {
+      display: none;
+      max-height: 50vh;
+      overflow-y: auto;
+      margin-top: 1rem;
+      border-top: 1px solid #ccc;
+      padding-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h2>Markdown 编辑器</h2>
+    </header>
+
+    <div class="toolbar">
+      <button onclick="insertSyntax('# ')">标题</button>
+      <button onclick="insertSyntax('**加粗**')">粗体</button>
+      <button onclick="insertSyntax('*斜体*')">斜体</button>
+      <button onclick="insertSyntax('~~删除线~~')">删除线</button>
+      <button onclick="insertSyntax('<u>下划线</u>')">下划线</button>
+      <button onclick="insertSyntax('---\n')">分隔线</button>
+      <button onclick="insertSyntax('[链接文本](https://example.com)')">链接</button>
+      <button onclick="insertSyntax('![图片描述](https://example.com/image.png)')">图片</button>
+      <button onclick="insertSyntax('- 项目1\n- 项目2')">列表</button>
+      <button onclick="insertSyntax('> 引用文本')">引用块</button>
+      <button onclick="insertSyntax('```js\nconsole.log(\"代码块\");\n```')">代码块</button>
+      <button onclick="insertSyntax('| 表头 | 表头 |\n| ---- | ---- |\n| 内容 | 内容 |')">表格</button>
+      <button onclick="insertSyntax('$$E = mc^2$$')">公式</button>
+      <button onclick="toggleSyntaxGuide()">📘 Markdown 语法</button>
+      <button onclick="copyMarkdown()">📋 复制 Markdown</button>
+    </div>
+
+    <div class="editor">
+      <textarea id="markdown-input" placeholder="在这里输入 Markdown..."></textarea>
+      <div class="preview markdown-body" id="markdown-preview"></div>
+    </div>
+
+    <div id="syntax-guide" class="markdown-body">
+      <h2>Markdown 语法指南</h2>
+      <ul>
+        <li><code># 标题1</code>, <code>## 标题2</code> 等</li>
+        <li>段落通过空行分隔</li>
+        <li><strong>粗体</strong>: <code>**文本**</code></li>
+        <li><em>斜体</em>: <code>*文本*</code></li>
+        <li><del>删除线</del>: <code>~~文本~~</code></li>
+        <li><u>下划线</u>: <code>&lt;u&gt;文本&lt;/u&gt;</code> (HTML)</li>
+        <li>分隔线: <code>---</code></li>
+        <li>脚注: <code>[^1]</code></li>
+        <li>列表: <code>-</code> 或 <code>1.</code></li>
+        <li>引用块: <code>&gt; 引用</code></li>
+        <li>代码块: <code>```语言```</code></li>
+        <li>链接: <code>[链接文本](网址)</code></li>
+        <li>图片: <code>![alt](img_url)</code></li>
+        <li>表格: 使用 <code>|</code> 分隔</li>
+        <li>转义字符: 使用 <code>\</code> 转义</li>
+        <li>数学公式: <code>$$ 公式 $$</code> 或 <code>\( \)</code></li>
+      </ul>
+    </div>
+
+    <footer>
+      部署到 Cloudflare Pages 即可使用，无需后端支持。
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script>
+    const input = document.getElementById('markdown-input');
+    const preview = document.getElementById('markdown-preview');
+
+    function renderMarkdown() {
+      preview.innerHTML = marked.parse(input.value);
+      MathJax.typesetPromise();
+    }
+
+    input.addEventListener('input', renderMarkdown);
+    window.onload = () => {
+      input.value = '# 欢迎使用 Markdown 编辑器';
+      renderMarkdown();
+    }
+
+    function insertSyntax(syntax) {
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const before = input.value.substring(0, start);
+      const after = input.value.substring(end);
+      input.value = before + syntax + after;
+      input.focus();
+      renderMarkdown();
+    }
+
+    function toggleSyntaxGuide() {
+      const guide = document.getElementById('syntax-guide');
+      guide.style.display = guide.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function copyMarkdown() {
+      input.select();
+      document.execCommand('copy');
+      alert('已复制 Markdown 内容');
+    }
+  </script>
+</body>
+</html>
